@@ -82,6 +82,7 @@
 /* ST includes. */
 #ifdef STM32F7xx
 	#include "stm32f7xx_hal.h"
+	#include "SEGGER_SYSVIEW_FreeRTOS.h"
 #else
 	#include "stm32f4xx_hal.h"
 #endif
@@ -429,6 +430,7 @@ BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	if( xEMACTaskHandle != NULL )
 	{
 		vTaskNotifyGiveFromISR( xEMACTaskHandle, &xHigherPriorityTaskWoken );
+		SEGGER_SYSVIEW_Print("RX Call back");
 		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 	}
 }
@@ -446,6 +448,7 @@ BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	if( xEMACTaskHandle != NULL )
 	{
 		vTaskNotifyGiveFromISR( xEMACTaskHandle, &xHigherPriorityTaskWoken );
+		SEGGER_SYSVIEW_Print("TX Call back");
 		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 	}
 

@@ -78,6 +78,7 @@
 #include "NetworkBufferManagement.h"
 #include "FreeRTOS_DNS.h"
 
+#include "SEGGER_SYSVIEW_FreeRTOS.h"
 
 /* Used to ensure the structure packing is having the desired effect.  The
 'volatile' is used to prevent compiler warnings about comparing a constant with
@@ -413,11 +414,13 @@ struct freertos_sockaddr xAddress;
 		{
 			case eNetworkDownEvent :
 				/* Attempt to establish a connection. */
+				SEGGER_SYSVIEW_Print("eNetworkDownEvent");
 				xNetworkUp = pdFALSE;
 				prvProcessNetworkDownEvent();
 				break;
 
 			case eNetworkRxEvent:
+				SEGGER_SYSVIEW_Print("eNetworkRxEvent");
 				/* The network hardware driver has received a new packet.  A
 				pointer to the received buffer is located in the pvData member
 				of the received event structure. */
@@ -425,6 +428,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			case eARPTimerEvent :
+				SEGGER_SYSVIEW_Print("eARPTimerEvent");
 				/* The ARP timer has expired, process the ARP cache. */
 				vARPAgeCache();
 				break;
@@ -435,6 +439,7 @@ struct freertos_sockaddr xAddress;
 				usLocalPort. vSocketBind() will actually bind the socket and the
 				API will unblock as soon as the eSOCKET_BOUND event is
 				triggered. */
+				SEGGER_SYSVIEW_Print("eSocketBindEvent");
 				pxSocket = ( FreeRTOS_Socket_t * ) ( xReceivedEvent.pvData );
 				xAddress.sin_addr = 0u;	/* For the moment. */
 				xAddress.sin_port = FreeRTOS_ntohs( pxSocket->usLocalPort );
@@ -449,6 +454,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			case eSocketCloseEvent :
+				SEGGER_SYSVIEW_Print("eSocketCloseEvent");
 				/* The user API FreeRTOS_closesocket() has sent a message to the
 				IP-task to actually close a socket. This is handled in
 				vSocketClose().  As the socket gets closed, there is no way to
@@ -457,6 +463,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			case eStackTxEvent :
+				SEGGER_SYSVIEW_Print("eStackTxEvent");
 				/* The network stack has generated a packet to send.  A
 				pointer to the generated buffer is located in the pvData
 				member of the received event structure. */
@@ -464,6 +471,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			case eDHCPEvent:
+				SEGGER_SYSVIEW_Print("eDHCPEvent");
 				/* The DHCP state machine needs processing. */
 				#if( ipconfigUSE_DHCP == 1 )
 				{
@@ -473,6 +481,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			case eSocketSelectEvent :
+				SEGGER_SYSVIEW_Print("eSocketSelectEvent");
 				/* FreeRTOS_select() has got unblocked by a socket event,
 				vSocketSelect() will check which sockets actually have an event
 				and update the socket field xSocketBits. */
@@ -484,6 +493,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			case eSocketSignalEvent :
+				SEGGER_SYSVIEW_Print("eSocketSignalEvent");
 				#if( ipconfigSUPPORT_SIGNALS != 0 )
 				{
 					/* Some task wants to signal the user of this socket in
@@ -494,6 +504,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			case eTCPTimerEvent :
+				SEGGER_SYSVIEW_Print("eTCPTimerEvent");
 				#if( ipconfigUSE_TCP == 1 )
 				{
 					/* Simply mark the TCP timer as expired so it gets processed
@@ -504,6 +515,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			case eTCPAcceptEvent:
+				SEGGER_SYSVIEW_Print("eTCPAcceptEvent");
 				/* The API FreeRTOS_accept() was called, the IP-task will now
 				check if the listening socket (communicated in pvData) actually
 				received a new connection. */
@@ -521,6 +533,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			case eTCPNetStat:
+				SEGGER_SYSVIEW_Print("eTCPNetStat");
 				/* FreeRTOS_netstat() was called to have the IP-task print an
 				overview of all sockets and their connections */
 				#if( ( ipconfigUSE_TCP == 1 ) && ( ipconfigHAS_PRINTF == 1 ) )
@@ -531,6 +544,7 @@ struct freertos_sockaddr xAddress;
 				break;
 
 			default :
+				SEGGER_SYSVIEW_Print("argh bad recieve");
 				/* Should not get here. */
 				break;
 		}
@@ -965,6 +979,7 @@ NetworkBufferDescriptor_t *pxResult;
 
 void FreeRTOS_ReleaseUDPPayloadBuffer( void *pvBuffer )
 {
+	SEGGER_SYSVIEW_Print("IP_Release buffer");
 	vReleaseNetworkBufferAndDescriptor( pxUDPPayloadBuffer_to_NetworkBuffer( pvBuffer ) );
 }
 /*-----------------------------------------------------------*/
@@ -1398,16 +1413,19 @@ volatile eFrameProcessingResult_t eReturned; /* Volatile to prevent complier war
 		{
 			case ipARP_FRAME_TYPE :
 				/* The Ethernet frame contains an ARP packet. */
+				SEGGER_SYSVIEW_Print("ipARP Frame");
 				eReturned = eARPProcessPacket( ( ARPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
 				break;
 
 			case ipIPv4_FRAME_TYPE :
 				/* The Ethernet frame contains an IP packet. */
+				SEGGER_SYSVIEW_Print("ipIPv4 Frame");
 				eReturned = prvProcessIPPacket( ( IPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer, pxNetworkBuffer );
 				break;
 
 			default :
 				/* No other packet types are handled.  Nothing to do. */
+				SEGGER_SYSVIEW_Print("not able to handle packet");
 				eReturned = eReleaseBuffer;
 				break;
 		}
@@ -1590,6 +1608,7 @@ uint8_t ucProtocol;
 
 			case ipPROTOCOL_UDP :
 				{
+					SEGGER_SYSVIEW_Print("UDP Protocol 17");
 					/* The IP packet contained a UDP frame. */
 					UDPPacket_t *pxUDPPacket = ( UDPPacket_t * ) ( pxNetworkBuffer->pucEthernetBuffer );
 
@@ -1616,7 +1635,7 @@ uint8_t ucProtocol;
 #if ipconfigUSE_TCP == 1
 			case ipPROTOCOL_TCP :
 				{
-
+					SEGGER_SYSVIEW_Print("TCP Protocol 6");
 					if( xProcessReceivedTCPPacket( pxNetworkBuffer ) == pdPASS )
 					{
 						eReturn = eFrameConsumed;
@@ -1629,6 +1648,7 @@ uint8_t ucProtocol;
 				break;
 #endif
 			default	:
+				SEGGER_SYSVIEW_Print("Non supported frame");
 				/* Not a supported frame type. */
 				break;
 		}
@@ -1743,6 +1763,7 @@ uint8_t ucProtocol;
 			case ipICMP_ECHO_REQUEST	:
 				#if ( ipconfigREPLY_TO_INCOMING_PINGS == 1 )
 				{
+					SEGGER_SYSVIEW_Print("Reply to Ping");
 					eReturn = prvProcessICMPEchoRequest( pxICMPPacket );
 				}
 				#endif /* ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) */
